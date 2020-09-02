@@ -17,44 +17,44 @@ def main() -> None:
 
     users_per_tick, ttask, umax = read_file()  # Read file info and verifies if ttask and umax are within the range.
 
-    tick = 1  # Start ticking.
-    servers_in_use = []
+    tick: int = 1  # Start ticking.
+    servers_in_use = []  # List of working servers
     users_per_server_per_tick = []  # No user.
-    cost_for_tick = 0
+    cost_for_tick = 0  # Cost for servers usage at every tick
 
     jump_flag = len(users_per_tick)  # To avoid unnecessary code execution.
 
     while tick != 0:
 
         disconnect_user(tick, servers_in_use)  # Disconnect users and release servers.
-        servers_in_use = release_server(servers_in_use)
+        servers_in_use = release_server(servers_in_use)  # Release unused working servers. No cost will be added.
 
         if tick <= jump_flag:  # After the whole input data is treated, skip some code execution.
 
-            list_of_users = []
+            list_of_users = []  # List of users that will be connected to the servers.
 
-            if users_per_tick[tick - 1] != 0:  # Users must be connected to the servers.
+            if users_per_tick[tick - 1] != 0:  # Users that will be connected to the servers.
                 for i in range(users_per_tick[tick - 1]):  # Create list of users
-                    user: User = User(tick, ttask)
+                    user: User = User(tick, ttask)  # Create user and add to the list.
                     list_of_users.append(user)
 
-                if len(servers_in_use) != 0:
-                    remainder_users = check_if_available(servers_in_use, umax, list_of_users)
-                    if remainder_users:
+                if len(servers_in_use) != 0:  # Check for working servers. If none, create servers.
+                    remainder_users = check_if_available(servers_in_use, umax, list_of_users)  # Check if users can be connected.
+                    if remainder_users:  # If some users were not connected to existing server, create servers.
                         servers_in_use = create_server(list_of_users, umax)
                 else:
                     servers_in_use = create_server(list_of_users, umax)
 
         cost_for_tick += (len(servers_in_use) * 1)  # Pay for each running server at every tick.
 
-        if len(servers_in_use):  # Count the connected users if server is running.
+        if len(servers_in_use):  # There are servers in use. Count the connected users if server is running.
             connected_users = count_users_connected(servers_in_use)  # List of users connected to servers at every tick.
         else:  # Last server was released.
             connected_users = [0]  # Print 0 to indicate no user connected.
 
         users_per_server_per_tick.append(connected_users)  # Collect the data for future output.
 
-        if len(servers_in_use) != 0:  # Servers still in use. Keep until all are released.
+        if len(servers_in_use) != 0:  # Servers still in use. Tick again until all are released.
             tick += 1
         else:  # All servers released. Prepare output file.
             users_per_server_per_tick.append(cost_for_tick)   # Append the cost for tick.
@@ -82,19 +82,19 @@ def create_server(list_of_users, umax):
         server: Server = Server(list_of_users)  # Create server with users
         servers_in_use.append(server)
     else:
-        for i in range(int(len(list_of_users) / umax) + 1):  # (len(list_of_users)/umax) sets plus one for the remainders.
-            partial_users = list_of_users[:umax]
+        for i in range(int(len(list_of_users) / umax) + 1):  # (len(list_of_users)/umax) sets of servers plus one for the remainders.
+            partial_users = list_of_users[:umax]  # Pick us some users to connect to the server.
             server: Server = Server(partial_users)  # Create server with users
             servers_in_use.append(server)
-            del (list_of_users[:umax])
+            del(list_of_users[:umax])  # Remove the users that have just been connected to the server.
     return servers_in_use
 
 
 def check_if_available(servers_in_use, umax, list_of_users):
-    """Checck if there are servers with less than maximum allowed number of users.
+    """Checck if there are servers with less than the maximum allowed number of users.
 
-    The latest created servers are check first and used so that the older ones
-    have more chance of being released.
+    The latest created servers are checked first and used so that the older ones
+    have more chances of being released.
 
     Parameters
     ----------
@@ -108,13 +108,13 @@ def check_if_available(servers_in_use, umax, list_of_users):
         List of users that will be connected to the server.
     """
 
-    for server in reversed(servers_in_use):  # Check first if the latest created servers are available.
-        users_conn = len(server.users)  # Load number of users connected to the server
+    for server in reversed(servers_in_use):  # Check first if the latest created servers is available.
+        users_conn = len(server.users)  # Load number of users connected to the server.
         if users_conn < umax:  # If possible, connect users.
             slicer = umax - users_conn  # The list of users will decrease.
             partial_list = list_of_users[:slicer]  # Create a list with users that can be connected to the server.
             server.conn_user(partial_list)  # Connect the user to the server.
-            del(list_of_users[:slicer])  # Remove the users that can be connected to the server.
+            del(list_of_users[:slicer])  # Remove the users that has just been connected to the server.
     return len(list_of_users)
 
 
@@ -197,7 +197,7 @@ def read_file():
 
     read_ttask = 0
     read_umax = 0
-    users_in_each_tick = []  # Amount of users that are added by tick.
+    users_in_each_tick = []  # Amount of users that will be added at every tick.
 
     for i in range(len(input_file)):
         if i == 0:
@@ -207,7 +207,7 @@ def read_file():
         else:
             users_in_each_tick.append(input_file[i])
 
-    if (1 > read_ttask or read_ttask > 10) or (1 > read_umax or read_umax > 10):  # or 1 > umax > 10:
+    if (1 > read_ttask or read_ttask > 10) or (1 > read_umax or read_umax > 10):
         print('The input file has invalid data or is empty.\n'
               'Please, correct the data or input another file.')
         print('Exiting.')
